@@ -1,0 +1,17 @@
+[package]
+name = "diffgeom"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+diffvec = { git = "https://github.com/dzamkov/diffvec" }
+serdere = { git = "https://github.com/dzamkov/serdere", optional = true }
+bytemuck = { version = "1", features = ["derive"], optional = true }
+thiserror = "2"
+derive_more = { version = "2", features = ["full"] }
+approx = "0.5"
+cantor = "0.1.3"
+
+[features]
+serdere = ["dep:serdere", "diffvec/serdere"]
+bytemuck = ["dep:bytemuck", "diffvec/bytemuck"]

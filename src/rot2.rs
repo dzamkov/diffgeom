@@ -1,4 +1,4 @@
-use crate::{vec2, Scalar, Vector2, Matrix2};
+use crate::{vec2, Matrix2, Scalar, Vector2};
 
 /// A rotational transform in two-dimensional space.
 #[repr(transparent)]
@@ -14,7 +14,8 @@ pub struct Rotation2 {
     ///  * Unlike angle or complex number representations, it does not require normalization to
     ///    to preserve precision/accuracy after composing many rotations.
     ///  * No need to evaluate transcendental functions to apply or compose rotations.
-    ///  * Precision is fairly uniform across the entire range of possible rotations.
+    ///  * Worst-case precision is better than angle representation, and comparable to
+    ///    complex representation. See [`test_distribution`].
     tan_half_angle: Scalar,
 }
 
@@ -157,4 +158,81 @@ fn test_into_matrix() {
     let vec = vec2(0.7, 0.3);
     approx::assert_relative_eq!(mat * vec, rot * vec);
     approx::assert_relative_eq!(mat.inverse() * vec, rot.inverse() * vec);
+}
+
+#[test]
+fn test_distribution() {
+    println!("=================================");
+    println!("Evaluating angle distribution");
+    let worst_density_angle = evaluate_distribution(|angle| angle.to_bits() as usize);
+    println!("=================================");
+    println!("Evaluating complex distribution");
+    let worst_density_complex = evaluate_distribution(|angle| {
+        const SQ: Scalar = core::f32::consts::SQRT_2 / 2.0;
+        const SEGMENT_SIZE: usize = (SQ.to_bits() - 0.0f32.to_bits()) as usize;
+        let sin = angle.sin().max(0.0);
+        let cos = angle.cos();
+
+        // Precision is based on smaller of sin and cos. Divide the range of angles into segments
+        // and return the index based on segment index and value index within that segment.
+        let (segment_index, value_index) = if sin.abs() < cos.abs() {
+            if cos > 0.0 {
+                (0, (sin.to_bits() - 0.0f32.to_bits()) as usize)
+            } else {
+                (3, (SQ.to_bits() - sin.to_bits()) as usize)
+            }
+        } else if cos.is_sign_positive() {
+            (1, (SQ.to_bits() - cos.to_bits()) as usize)
+        } else {
+            (2, ((-cos).to_bits() - 0.0f32.to_bits()) as usize)
+        };
+        segment_index * SEGMENT_SIZE + value_index
+    });
+    println!("=================================");
+    println!("Evaluating Rotation2 distribution");
+    let worst_density_rot2 = evaluate_distribution(|angle| {
+        Rotation2::from_angle(angle).tan_half_angle.to_bits() as usize
+    });
+
+    // Verify that rotation representation has better worst-case precision than angle
+    // representation
+    assert!(worst_density_rot2 > worst_density_angle);
+
+    // Verify that rotation representation has comparable worst-case precision to complex
+    // representation
+    assert!(worst_density_rot2 * 1.5 > worst_density_complex);
+
+    /// Evaluates the precision of a rotation representation over the entire range of possible
+    /// rotations.
+    ///
+    /// The function `value_index` should return the index of the rotation value for the given
+    /// angle. It should be monotonic.
+    ///
+    /// Returns the worst case value density (values per radian)
+    fn evaluate_distribution(value_index: impl Fn(Scalar) -> usize) -> Scalar {
+        const DIVS: usize = 64;
+        let mut prev_angle = 0.0;
+        let mut prev_index = value_index(0.0);
+        let mut worst_bin_angles = (0.0, 0.0);
+        let mut worst_bin_size = usize::MAX;
+        for i in 1..=DIVS {
+            let cur_angle = (i as Scalar / DIVS as Scalar) * diffvec::PI;
+            let cur_index = value_index(cur_angle);
+            assert!(cur_index >= prev_index);
+            let bin_size = cur_index - prev_index;
+            if bin_size <= worst_bin_size {
+                worst_bin_angles = (prev_angle, cur_angle);
+                worst_bin_size = bin_size;
+            }
+            prev_angle = cur_angle;
+            prev_index = cur_index;
+        }
+        println!(
+            "Worst bin: ({:?}, {:?}): {:?}",
+            worst_bin_angles.0, worst_bin_angles.1, worst_bin_size
+        );
+        let worst_density = worst_bin_size as f32 / (worst_bin_angles.1 - worst_bin_angles.0);
+        println!("Worst bin density: {:?}", worst_density);
+        worst_density
+    }
 }

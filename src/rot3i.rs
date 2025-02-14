@@ -1,7 +1,7 @@
 use crate::{vec3, vec3i, Rotation3, Scalar, Vector3, Vector3i, Motion3};
 use cantor::Finite;
 
-/// An rotation in discrete (axis-aligned) three-dimensional space.
+/// A rotation in discrete (axis-aligned) three-dimensional space.
 ///
 /// Each element is named after the result of applying the rotation to `(+X, +Y, +Z)`.
 #[repr(u8)]

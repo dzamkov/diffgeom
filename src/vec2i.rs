@@ -35,7 +35,7 @@ impl Vector2i {
 
     /// Converts this discrete vector into a floating-point vector.
     #[inline(always)]
-    pub fn into_float(self) -> Vector2 {
+    pub const fn to_float(&self) -> Vector2 {
         vec2(self.x as f32, self.y as f32)
     }
 }
@@ -120,6 +120,6 @@ impl From<Dir2i> for Vector2i {
 impl From<Dir2i> for Vector2 {
     #[inline]
     fn from(dir: Dir2i) -> Self {
-        Vector2i::from(dir).into_float()
+        Vector2i::from(dir).to_float()
     }
 }

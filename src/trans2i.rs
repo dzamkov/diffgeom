@@ -81,7 +81,7 @@ impl core::ops::Mul<Vector2i> for Motion2i {
 impl core::ops::Mul<Vector2> for Motion2i {
     type Output = Vector2;
     fn mul(self, rhs: Vector2) -> Vector2 {
-        self.rotation * rhs + self.offset.into_float()
+        self.rotation * rhs + self.offset.to_float()
     }
 }
 
@@ -89,7 +89,7 @@ impl From<Motion2i> for Motion2 {
     fn from(value: Motion2i) -> Self {
         Motion2 {
             rotation: value.rotation.into(),
-            offset: value.offset.into_float(),
+            offset: value.offset.to_float(),
         }
     }
 }
@@ -229,7 +229,7 @@ impl core::ops::Mul<Vector2> for Ortho2i {
         if self.swap_axes {
             std::mem::swap(&mut x, &mut y);
         }
-        vec2(x, y) + self.offset.into_float()
+        vec2(x, y) + self.offset.to_float()
     }
 }
 

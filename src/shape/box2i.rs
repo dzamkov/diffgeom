@@ -114,19 +114,23 @@ impl Size2i {
     }
 
     /// The size in the x direction.
+    /// 
+    /// This will panic if the value exceeds the maximum representable by `u32`.
     #[inline]
     pub const fn x(&self) -> u32 {
-        self.x_minus_1 + 1
+        self.x_minus_1.checked_add(1).expect(SIZE_OVERFLOW_ERROR)
     }
 
     /// The size in the y direction.
+    /// 
+    /// This will panic if the value exceeds the maximum representable by `u32`.
     #[inline]
     pub const fn y(&self) -> u32 {
-        self.y_minus_1 + 1
+        self.y_minus_1.checked_add(1).expect(SIZE_OVERFLOW_ERROR)
     }
 
     /// One less than the size in the x direction.
-    /// 
+    ///
     /// Unlike [`Self::x`], this method will not panic for the maximum size.
     #[inline]
     pub const fn x_minus_1(&self) -> u32 {
@@ -134,17 +138,30 @@ impl Size2i {
     }
 
     /// One less than the size in the y direction.
-    /// 
+    ///
     /// Unlike [`Self::y`], this method will not panic for the maximum size.
     #[inline]
     pub const fn y_minus_1(&self) -> u32 {
         self.y_minus_1
+    }
+
+    /// Converts this size into a discrete vector.
+    /// 
+    /// This will panic if any component overflows the maximum value of `i32`.
+    #[inline]
+    pub const fn to_vec(&self) -> Vector2i {
+        assert!(self.x_minus_1 <= (i32::MAX as u32 - 1), "{}", SIZE_OVERFLOW_ERROR);
+        assert!(self.y_minus_1 <= (i32::MAX as u32 - 1), "{}", SIZE_OVERFLOW_ERROR);
+        vec2i((self.x_minus_1 + 1) as i32, (self.y_minus_1 + 1) as i32)
     }
 }
 
 /// The error message given when there is an attempt to construct a [`Size2i`] with a zero
 /// component.
 const SIZE_COMPONENT_ZERO_ERROR: &str = "size component must not be zero";
+
+/// The error message given when an overflow occurs when reading the values of a [`Size2i`].
+const SIZE_OVERFLOW_ERROR: &str = "size component overflow";
 
 /// Shortcut for constructing a [`Size2i`] from its components. Panics if any component is zero.
 #[inline(always)]

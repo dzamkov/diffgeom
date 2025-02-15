@@ -113,15 +113,31 @@ impl Size2i {
         }
     }
 
-    /// One less than the size in the x direction.
+    /// The size in the x direction.
     #[inline]
-    pub fn x_minus_1(&self) -> u32 {
+    pub const fn x(&self) -> u32 {
+        self.x_minus_1 + 1
+    }
+
+    /// The size in the y direction.
+    #[inline]
+    pub const fn y(&self) -> u32 {
+        self.y_minus_1 + 1
+    }
+
+    /// One less than the size in the x direction.
+    /// 
+    /// Unlike [`Self::x`], this method will not panic for the maximum size.
+    #[inline]
+    pub const fn x_minus_1(&self) -> u32 {
         self.x_minus_1
     }
 
     /// One less than the size in the y direction.
+    /// 
+    /// Unlike [`Self::y`], this method will not panic for the maximum size.
     #[inline]
-    pub fn y_minus_1(&self) -> u32 {
+    pub const fn y_minus_1(&self) -> u32 {
         self.y_minus_1
     }
 }

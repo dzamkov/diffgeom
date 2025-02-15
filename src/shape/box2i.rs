@@ -99,8 +99,17 @@ impl Box2i {
 #[derive(Default, PartialEq, Eq, Copy, Clone, Hash)]
 #[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
 pub struct Size2i {
-    x_minus_1: u32,
-    y_minus_1: u32,
+    /// One less than the size in the x direction.
+    /// 
+    /// This representation is used to improve the performance of [`Box2i::size`] and prevent
+    /// overflow for [`Box2i::ALL`].
+    pub x_minus_1: u32,
+
+    /// One less than the size in the y direction.
+    /// 
+    /// This representation is used to improve the performance of [`Box2i::size`] and prevent
+    /// overflow for [`Box2i::ALL`].
+    pub y_minus_1: u32,
 }
 
 impl Size2i {
@@ -127,22 +136,6 @@ impl Size2i {
     #[inline]
     pub const fn y(&self) -> u32 {
         self.y_minus_1.checked_add(1).expect(SIZE_OVERFLOW_ERROR)
-    }
-
-    /// One less than the size in the x direction.
-    ///
-    /// Unlike [`Self::x`], this method will not panic for the maximum size.
-    #[inline]
-    pub const fn x_minus_1(&self) -> u32 {
-        self.x_minus_1
-    }
-
-    /// One less than the size in the y direction.
-    ///
-    /// Unlike [`Self::y`], this method will not panic for the maximum size.
-    #[inline]
-    pub const fn y_minus_1(&self) -> u32 {
-        self.y_minus_1
     }
 
     /// Converts this size into a discrete vector.

@@ -1,6 +1,5 @@
-use crate::{vec2i, Motion2, Rotation2i, Vector2i};
-use diffvec::{vec2, Vector2};
-use std::num::{NonZeroI32, NonZeroI8};
+use crate::{vec2, vec2i, Motion2, Rotation2i, Scalar, Vector2, Vector2i};
+use std::num::NonZeroI32;
 
 /// A transform in discrete two-dimensional space consisting of rotation and translation.
 ///
@@ -100,11 +99,12 @@ impl From<Motion2i> for Motion2 {
 #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash)]
 pub struct Ortho2i {
     /// The scaling applied to the X axis. Can be negative to reflect about Y axis.
-    scaling_x: NonZeroI8,
+    scaling_x: NonZeroI32,
 
     /// The scaling applied to the Y axis. Can be negative to reflect about X axis.
-    scaling_y: NonZeroI8,
+    scaling_y: NonZeroI32,
 
+    // TODO: Try to combine with one of the other fields to save 4 bytes of storage
     /// If true, the X and Y axes are swapped after scaling.
     swap_axes: bool,
 
@@ -117,8 +117,8 @@ impl Ortho2i {
     /// The identity transform.
     pub const fn identity() -> Self {
         Self {
-            scaling_x: NonZeroI8::new(1).unwrap(),
-            scaling_y: NonZeroI8::new(1).unwrap(),
+            scaling_x: NonZeroI32::new(1).unwrap(),
+            scaling_y: NonZeroI32::new(1).unwrap(),
             swap_axes: false,
             offset: vec2i(0, 0),
         }
@@ -127,8 +127,8 @@ impl Ortho2i {
     /// Constructs an orthogonal transform which translates by the given offset.
     pub const fn translate(offset: Vector2i) -> Self {
         Self {
-            scaling_x: NonZeroI8::new(1).unwrap(),
-            scaling_y: NonZeroI8::new(1).unwrap(),
+            scaling_x: NonZeroI32::new(1).unwrap(),
+            scaling_y: NonZeroI32::new(1).unwrap(),
             swap_axes: false,
             offset,
         }
@@ -139,8 +139,8 @@ impl Ortho2i {
         let scaling_x: NonZeroI32 = x.try_into().unwrap();
         let scaling_y: NonZeroI32 = y.try_into().unwrap();
         Self {
-            scaling_x: scaling_x.try_into().unwrap(),
-            scaling_y: scaling_y.try_into().unwrap(),
+            scaling_x,
+            scaling_y,
             swap_axes: false,
             offset: vec2i(0, 0),
         }
@@ -157,23 +157,23 @@ impl From<Motion2i> for Ortho2i {
     fn from(value: Motion2i) -> Self {
         let (scaling_x, scaling_y, swap_axes) = [
             (
-                NonZeroI8::new(1).unwrap(),
-                NonZeroI8::new(1).unwrap(),
+                NonZeroI32::new(1).unwrap(),
+                NonZeroI32::new(1).unwrap(),
                 false,
             ),
             (
-                NonZeroI8::new(1).unwrap(),
-                NonZeroI8::new(-1).unwrap(),
+                NonZeroI32::new(1).unwrap(),
+                NonZeroI32::new(-1).unwrap(),
                 true,
             ),
             (
-                NonZeroI8::new(-1).unwrap(),
-                NonZeroI8::new(-1).unwrap(),
+                NonZeroI32::new(-1).unwrap(),
+                NonZeroI32::new(-1).unwrap(),
                 false,
             ),
             (
-                NonZeroI8::new(-1).unwrap(),
-                NonZeroI8::new(1).unwrap(),
+                NonZeroI32::new(-1).unwrap(),
+                NonZeroI32::new(1).unwrap(),
                 true,
             ),
         ][value.rotation as usize];
@@ -197,8 +197,8 @@ impl core::ops::Mul<Ortho2i> for Ortho2i {
         if rhs.swap_axes {
             std::mem::swap(&mut scaling_x, &mut scaling_y);
         }
-        let scaling_x = NonZeroI8::try_from(scaling_x.get() * rhs.scaling_x.get()).unwrap();
-        let scaling_y = NonZeroI8::try_from(scaling_y.get() * rhs.scaling_y.get()).unwrap();
+        let scaling_x = NonZeroI32::try_from(scaling_x.get() * rhs.scaling_x.get()).unwrap();
+        let scaling_y = NonZeroI32::try_from(scaling_y.get() * rhs.scaling_y.get()).unwrap();
         let swap_axes = self.swap_axes ^ rhs.swap_axes;
         Ortho2i {
             scaling_x,
@@ -212,8 +212,8 @@ impl core::ops::Mul<Ortho2i> for Ortho2i {
 impl core::ops::Mul<Vector2i> for Ortho2i {
     type Output = Vector2i;
     fn mul(self, rhs: Vector2i) -> Vector2i {
-        let mut x = rhs.x * i32::from(self.scaling_x.get());
-        let mut y = rhs.y * i32::from(self.scaling_y.get());
+        let mut x = rhs.x * self.scaling_x.get();
+        let mut y = rhs.y * self.scaling_y.get();
         if self.swap_axes {
             std::mem::swap(&mut x, &mut y);
         }
@@ -224,8 +224,8 @@ impl core::ops::Mul<Vector2i> for Ortho2i {
 impl core::ops::Mul<Vector2> for Ortho2i {
     type Output = Vector2;
     fn mul(self, rhs: Vector2) -> Vector2 {
-        let mut x = rhs.x * f32::from(self.scaling_x.get());
-        let mut y = rhs.y * f32::from(self.scaling_y.get());
+        let mut x = rhs.x * (self.scaling_x.get() as Scalar);
+        let mut y = rhs.y * (self.scaling_y.get() as Scalar);
         if self.swap_axes {
             std::mem::swap(&mut x, &mut y);
         }
@@ -239,6 +239,12 @@ fn test_compose_ortho() {
     let b = Ortho2i::scale(-5, 7);
     let c = Rotation2i::CCW_90 * Motion2i::translate(vec2i(3, 4));
     let x = vec2i(-4, 9);
-    assert_eq!(Ortho2i::from(a) * b * Ortho2i::from(c), Ortho2i::from(a) * (b * Ortho2i::from(c)));
-    assert_eq!(Ortho2i::from(a) * b * Ortho2i::from(c) * x, a * (b * (c * x)));
+    assert_eq!(
+        Ortho2i::from(a) * b * Ortho2i::from(c),
+        Ortho2i::from(a) * (b * Ortho2i::from(c))
+    );
+    assert_eq!(
+        Ortho2i::from(a) * b * Ortho2i::from(c) * x,
+        a * (b * (c * x))
+    );
 }

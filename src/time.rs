@@ -1,4 +1,5 @@
 use crate::Scalar;
+use diffvec::{Diff, PolyMappable};
 use std::ops::{Add, AddAssign, Div, DivAssign, Sub, SubAssign};
 
 /// Represents a span of time using a fixed-point representation that ensures consistent precision
@@ -26,12 +27,12 @@ impl Duration {
     pub const MIN_POSITIVE: Duration = Duration { nanos: 1 };
 
     /// Constructs a [`Duration`] for the given number of whole seconds. Panics on overflow.
-    pub fn from_secs(secs: u64) -> Duration {
+    pub const fn from_secs(secs: u64) -> Duration {
         Duration::try_from_secs(secs).expect("duration overflow")
     }
 
     /// Constructs a [`Duration`] from the given number of milliseconds. Panics on overflow.
-    pub fn from_millis(millis: u64) -> Duration {
+    pub const fn from_millis(millis: u64) -> Duration {
         Duration::try_from_millis(millis).expect("duration overflow")
     }
 
@@ -42,16 +43,22 @@ impl Duration {
 
     /// Constructs a [`Duration`] for the given number of whole seconds or returns [`None`] if
     /// this exceeds the representable range of [`Duration`].
-    pub fn try_from_secs(secs: u64) -> Option<Duration> {
-        secs.checked_mul(NANOS_PER_SEC).map(Duration::from_nanos)
+    pub const fn try_from_secs(secs: u64) -> Option<Duration> {
+        if let Some(nanos) = secs.checked_mul(NANOS_PER_SEC) {
+            Some(Duration::from_nanos(nanos))
+        } else {
+            None
+        }
     }
 
     /// Constructs a [`Duration`] for the given number of whole milliseconds or returns [`None`]
     /// if this exceeds the representable range of [`Duration`].
-    pub fn try_from_millis(millis: u64) -> Option<Duration> {
-        millis
-            .checked_mul(NANOS_PER_MILLI)
-            .map(Duration::from_nanos)
+    pub const fn try_from_millis(millis: u64) -> Option<Duration> {
+        if let Some(nanos) = millis.checked_mul(NANOS_PER_MILLI) {
+            Some(Duration::from_nanos(nanos))
+        } else {
+            None
+        }
     }
 
     /// Constructs a [`Duration`] for the given number of seconds. Panics on overflow, or if
@@ -106,22 +113,22 @@ impl Duration {
     }
 
     /// Indicates whether this is [`Duration::ZERO`].
-    pub fn is_zero(self) -> bool {
+    pub const fn is_zero(self) -> bool {
         self.nanos == 0
     }
 
     /// Gets the total number of seconds in this [`Duration`] as a `f64`.
-    pub fn as_secs_f64(self) -> f64 {
+    pub const fn as_secs_f64(self) -> f64 {
         (self.nanos as f64) / (NANOS_PER_SEC as f64)
     }
 
     /// Gets the total number of seconds in this [`Duration`] as a scalar.
-    pub fn as_secs_scalar(self) -> Scalar {
+    pub const fn as_secs_scalar(self) -> Scalar {
         (self.nanos as Scalar) / (NANOS_PER_SEC as Scalar)
     }
 
     /// Gets the total number of nanoseconds in this [`Duration`].
-    pub fn as_nanos(self) -> u64 {
+    pub const fn as_nanos(self) -> u64 {
         self.nanos
     }
 }
@@ -214,3 +221,30 @@ impl From<TryFromError> for TryFromFloatError {
 #[derive(thiserror::Error, Debug)]
 #[error("duration overflow")]
 pub struct TryFromError;
+
+/// Contains extension methods for `Diff<Poly, Duration, Scalar>`
+pub trait DiffDurationExt<Poly: PolyMappable> {
+    /// Gets the number of seconds between this duration and the given duration, or returns
+    /// [`None`] if this duration is greater than the given duration.
+    fn secs_to(&self, target: Duration) -> Option<Diff<Poly, Scalar>>;
+
+    /// Gets the number of seconds between this duration and the given duration, or returns
+    /// [`None`] if this duration is less than the given duration.
+    fn secs_from(&self, target: Duration) -> Option<Diff<Poly, Scalar>>;
+}
+
+impl<Poly: PolyMappable> DiffDurationExt<Poly> for Diff<Poly, Duration, Scalar> {
+    fn secs_to(&self, target: Duration) -> Option<Diff<Poly, Scalar>> {
+        target.checked_sub(self.value).map(|value| Diff {
+            value: value.as_secs_scalar(),
+            poly: -self.poly,
+        })
+    }
+
+    fn secs_from(&self, target: Duration) -> Option<Diff<Poly, Scalar>> {
+        self.value.checked_sub(target).map(|value| Diff {
+            value: value.as_secs_scalar(),
+            poly: self.poly,
+        })
+    }
+}

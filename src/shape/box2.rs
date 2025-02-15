@@ -61,4 +61,33 @@ impl Box2 {
             && other.min.x <= self.max.x
             && other.min.y <= self.max.y
     }
+
+    /// Gets the smallest box that contains both this box and the given box.
+    #[inline]
+    pub fn bound(&self, other: Box2) -> Box2 {
+        Self {
+            min: vec2(self.min.x.min(other.min.x), self.min.y.min(other.min.y)),
+            max: vec2(self.max.x.max(other.max.x), self.max.y.max(other.max.y)),
+        }
+    }
+
+    /// Gets the smallest box that contains all of the given boxes, or returns [`None`] if the
+    /// iterator is empty.
+    #[inline]
+    pub fn bound_many(mut boxes: impl Iterator<Item = Box2>) -> Option<Box2> {
+        let mut min = vec2(Scalar::INFINITY, Scalar::INFINITY);
+        let mut max = vec2(Scalar::NEG_INFINITY, Scalar::NEG_INFINITY);
+        let mut bx = boxes.next()?;
+        loop {
+            min.x = min.x.min(bx.min.x);
+            min.y = min.y.min(bx.min.y);
+            max.x = max.x.max(bx.max.x);
+            max.y = max.y.max(bx.max.y);
+            if let Some(next_bx) = boxes.next() {
+                bx = next_bx;
+            } else {
+                return Some(Box2 { min, max });
+            }
+        }
+    }
 }

@@ -33,7 +33,8 @@ mod vec3i;
 pub mod shape;
 pub mod time;
 
-pub use diffvec::{vec2, vec3, vec4, Matrix2, Matrix3, Matrix4, Scalar, Vector2, Vector3, Vector4};
+pub use diffvec::{vec2, vec3, vec4, Matrix2, Matrix3, Matrix4, Vector2, Vector3, Vector4};
+pub use diffvec::{Scalar, PI};
 pub use rot2::Rotation2;
 pub use rot3::Rotation3;
 pub use rot2i::Rotation2i;

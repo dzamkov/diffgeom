@@ -15,10 +15,12 @@ pub struct Motion2 {
 
 impl Motion2 {
     /// The identity motion.
-    pub const IDENTITY: Self = Self {
-        rotation: Rotation2::IDENTITY,
-        offset: vec2(0.0, 0.0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            rotation: Rotation2::IDENTITY,
+            offset: vec2(0.0, 0.0),
+        }
+    }
 
     /// Constructs a motion which translates by the given offset.
     pub const fn translate(offset: Vector2) -> Self {
@@ -51,6 +53,8 @@ impl From<Rotation2> for Motion2 {
         }
     }
 }
+
+impl_trans_mul!(Rotation2, Motion2);
 
 impl core::ops::Mul<Motion2> for Motion2 {
     type Output = Motion2;
@@ -88,11 +92,13 @@ pub struct Similarity2 {
 
 impl Similarity2 {
     /// The identity similarity.
-    pub const IDENTITY: Self = Self {
-        rotation: Rotation2::IDENTITY,
-        scaling: 1.0,
-        offset: vec2(0.0, 0.0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            rotation: Rotation2::IDENTITY,
+            scaling: 1.0,
+            offset: vec2(0.0, 0.0),
+        }
+    }
 
     /// Constructs a similarity which translates by the given offset.
     pub const fn translate(offset: Vector2) -> Self {
@@ -149,6 +155,9 @@ impl From<Motion2> for Similarity2 {
     }
 }
 
+impl_trans_mul!(Rotation2, Similarity2);
+impl_trans_mul!(Motion2, Similarity2);
+
 impl core::ops::Mul<Similarity2> for Similarity2 {
     type Output = Similarity2;
     fn mul(self, rhs: Similarity2) -> Similarity2 {
@@ -183,10 +192,12 @@ pub struct Affine2 {
 
 impl Affine2 {
     /// The identity transform.
-    pub const IDENTITY: Self = Self {
-        linear: Matrix2::identity(),
-        offset: vec2(0.0, 0.0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            linear: Matrix2::identity(),
+            offset: vec2(0.0, 0.0),
+        }
+    }
 
     /// Constructs an affine transform which translates by the given offset.
     pub fn translate(offset: Vector2) -> Self {
@@ -244,6 +255,10 @@ impl From<Similarity2> for Affine2 {
     }
 }
 
+impl_trans_mul!(Rotation2, Affine2);
+impl_trans_mul!(Motion2, Affine2);
+impl_trans_mul!(Similarity2, Affine2);
+
 impl core::ops::Mul<Affine2> for Affine2 {
     type Output = Affine2;
     fn mul(self, rhs: Affine2) -> Affine2 {
@@ -251,20 +266,6 @@ impl core::ops::Mul<Affine2> for Affine2 {
             linear: self.linear * rhs.linear,
             offset: self.linear * rhs.offset + self.offset,
         }
-    }
-}
-
-impl core::ops::Mul<Similarity2> for Affine2 {
-    type Output = Affine2;
-    fn mul(self, rhs: Similarity2) -> Affine2 {
-        self * Affine2::from(rhs)
-    }
-}
-
-impl core::ops::Mul<Rotation2> for Affine2 {
-    type Output = Affine2;
-    fn mul(self, rhs: Rotation2) -> Affine2 {
-        self * Affine2::from(rhs)
     }
 }
 

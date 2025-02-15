@@ -1,9 +1,31 @@
+/// Implements composition of two different types of transformations.
+macro_rules! impl_trans_mul {
+    ($sub:ty, $super:ty) => {
+        impl core::ops::Mul<$sub> for $super {
+            type Output = $super;
+            #[inline]
+            fn mul(self, rhs: $sub) -> $super {
+                self * <$super>::from(rhs)
+            }
+        }
+
+        impl core::ops::Mul<$super> for $sub {
+            type Output = $super;
+            #[inline]
+            fn mul(self, rhs: $super) -> $super {
+                <$super>::from(self) * rhs
+            }
+        }
+    };
+}
+
 mod rot2;
 mod rot3;
 mod rot2i;
 mod rot3i;
 mod trans2;
 mod trans3;
+mod proj3;
 mod trans2i;
 mod vec2i;
 mod vec3i;

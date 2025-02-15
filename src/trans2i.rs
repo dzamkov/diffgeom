@@ -20,10 +20,12 @@ pub struct Motion2i {
 
 impl Motion2i {
     /// The identity motion.
-    pub const IDENTITY: Self = Self {
-        rotation: Rotation2i::IDENTITY,
-        offset: Vector2i::new(0, 0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            rotation: Rotation2i::IDENTITY,
+            offset: Vector2i::new(0, 0),
+        }
+    }
 
     /// Constructs a motion which translates by the given offset.
     pub const fn translate(offset: Vector2i) -> Self {
@@ -48,25 +50,16 @@ impl Motion2i {
     }
 }
 
-impl core::ops::Mul<Rotation2i> for Motion2i {
-    type Output = Motion2i;
-    fn mul(self, rhs: Rotation2i) -> Motion2i {
+impl From<Rotation2i> for Motion2i {
+    fn from(value: Rotation2i) -> Self {
         Motion2i {
-            rotation: self.rotation * rhs,
-            offset: self.offset,
+            rotation: value,
+            offset: vec2i(0, 0),
         }
     }
 }
 
-impl core::ops::Mul<Motion2i> for Rotation2i {
-    type Output = Motion2i;
-    fn mul(self, rhs: Motion2i) -> Motion2i {
-        Motion2i {
-            rotation: self * rhs.rotation,
-            offset: self * rhs.offset,
-        }
-    }
-}
+impl_trans_mul!(Rotation2i, Motion2i);
 
 impl core::ops::Mul<Motion2i> for Motion2i {
     type Output = Motion2i;
@@ -122,12 +115,14 @@ pub struct Ortho2i {
 
 impl Ortho2i {
     /// The identity transform.
-    pub const IDENTITY: Self = Self {
-        scaling_x: NonZeroI8::new(1).unwrap(),
-        scaling_y: NonZeroI8::new(1).unwrap(),
-        swap_axes: false,
-        offset: vec2i(0, 0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            scaling_x: NonZeroI8::new(1).unwrap(),
+            scaling_y: NonZeroI8::new(1).unwrap(),
+            swap_axes: false,
+            offset: vec2i(0, 0),
+        }
+    }
 
     /// Constructs an orthogonal transform which translates by the given offset.
     pub const fn translate(offset: Vector2i) -> Self {
@@ -149,6 +144,12 @@ impl Ortho2i {
             swap_axes: false,
             offset: vec2i(0, 0),
         }
+    }
+}
+
+impl From<Rotation2i> for Ortho2i {
+    fn from(value: Rotation2i) -> Self {
+        Motion2i::from(value).into()
     }
 }
 
@@ -184,6 +185,9 @@ impl From<Motion2i> for Ortho2i {
         }
     }
 }
+
+impl_trans_mul!(Rotation2i, Ortho2i);
+impl_trans_mul!(Motion2i, Ortho2i);
 
 impl core::ops::Mul<Ortho2i> for Ortho2i {
     type Output = Ortho2i;

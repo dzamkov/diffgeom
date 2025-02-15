@@ -15,10 +15,12 @@ pub struct Motion3 {
 
 impl Motion3 {
     /// The identity motion.
-    pub const IDENTITY: Self = Self {
-        rotation: Rotation3::IDENTITY,
-        offset: vec3(0.0, 0.0, 0.0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            rotation: Rotation3::IDENTITY,
+            offset: vec3(0.0, 0.0, 0.0),
+        }
+    }
 
     /// Constructs a motion which translates by the given offset.
     pub const fn translate(offset: Vector3) -> Self {
@@ -31,6 +33,12 @@ impl Motion3 {
     /// Gets the linear component of this motion.
     pub const fn linear(&self) -> Rotation3 {
         self.rotation
+    }
+}
+
+impl Default for Motion3 {
+    fn default() -> Self {
+        Self::identity()
     }
 }
 
@@ -99,11 +107,13 @@ pub struct Similarity3 {
 
 impl Similarity3 {
     /// The identity similarity.
-    pub const IDENTITY: Self = Self {
-        rotation: Rotation3::IDENTITY,
-        scaling: 1.0,
-        offset: vec3(0.0, 0.0, 0.0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            rotation: Rotation3::IDENTITY,
+            scaling: 1.0,
+            offset: vec3(0.0, 0.0, 0.0),
+        }
+    }
 
     /// Constructs a similarity which translates by the given offset.
     pub const fn translate(offset: Vector3) -> Self {
@@ -137,6 +147,12 @@ impl Similarity3 {
     /// Gets the linear component (consisting of rotation and scaling) for this similarity.
     pub fn linear(&self) -> Matrix3 {
         Matrix3::from(self.rotation) * self.scaling
+    }
+}
+
+impl Default for Similarity3 {
+    fn default() -> Self {
+        Self::identity()
     }
 }
 
@@ -194,13 +210,15 @@ pub struct Affine3 {
 
 impl Affine3 {
     /// The identity transform.
-    pub const IDENTITY: Self = Self {
-        linear: Matrix3::identity(),
-        offset: vec3(0.0, 0.0, 0.0),
-    };
+    pub const fn identity() -> Self {
+        Self {
+            linear: Matrix3::identity(),
+            offset: vec3(0.0, 0.0, 0.0),
+        }
+    }
 
     /// Constructs an affine transform which translates by the given offset.
-    pub fn translate(offset: Vector3) -> Self {
+    pub const fn translate(offset: Vector3) -> Self {
         Self {
             linear: Matrix3::identity(),
             offset,
@@ -208,7 +226,7 @@ impl Affine3 {
     }
 
     /// Constructs an affine transform which scales non-uniformly by the given factors.
-    pub fn scale(x: Scalar, y: Scalar, z: Scalar) -> Self {
+    pub const fn scale(x: Scalar, y: Scalar, z: Scalar) -> Self {
         Self {
             linear: Matrix3 {
                 x: vec3(x, 0.0, 0.0),
@@ -226,6 +244,12 @@ impl Affine3 {
             linear,
             offset: linear * (-self.offset),
         }
+    }
+}
+
+impl Default for Affine3 {
+    fn default() -> Self {
+        Self::identity()
     }
 }
 

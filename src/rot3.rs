@@ -16,6 +16,7 @@ impl Rotation3 {
     /// Constructs a [`Rotation3`] from its quaternion components.
     ///
     /// This assumes that the input is normalized, i.e. `w² + x² + y² + z² = 1`.
+    #[inline]
     pub const fn new_unchecked(w: Scalar, x: Scalar, y: Scalar, z: Scalar) -> Self {
         Self {
             x_y_z: vec3(x, y, z),
@@ -49,6 +50,7 @@ impl Rotation3 {
 
     /// Constructs a rotation about the given vector with an angle which is equal to its magnitude,
     /// in radians, following the right-hand rule.
+    #[inline]
     pub fn from_euler(vec: Vector3) -> Self {
         let len = vec.norm();
         Self::about(vec / len, Rotation2::from_angle(len))
@@ -99,6 +101,7 @@ impl Rotation3 {
     }
 
     /// Gets the inverse of this rotation.
+    #[inline]
     pub fn inverse(&self) -> Self {
         Self {
             x_y_z: -self.x_y_z,
@@ -108,6 +111,7 @@ impl Rotation3 {
 }
 
 impl Default for Rotation3 {
+    #[inline]
     fn default() -> Self {
         Self::IDENTITY
     }

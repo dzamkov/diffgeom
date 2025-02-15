@@ -1,4 +1,4 @@
-use crate::Vector2i;
+use crate::{vec2i, Vector2i};
 use std::num::NonZeroU32;
 
 /// An axis-aligned rectangle in discrete two-dimensional space.
@@ -19,8 +19,8 @@ pub struct Box2i {
 impl Box2i {
     /// A [`Box2i`]` that contains all points.
     pub const ALL: Box2i = Self {
-        min: Vector2i::new(i32::MIN, i32::MIN),
-        max: Vector2i::new(i32::MAX, i32::MAX),
+        min: vec2i(i32::MIN, i32::MIN),
+        max: vec2i(i32::MAX, i32::MAX),
     };
 
     /// Constructs a [`Box2i`] which contains only the given point.
@@ -36,7 +36,7 @@ impl Box2i {
     ///
     /// This is also the smallest box that contains the two points.
     #[inline]
-    pub fn from_min_max(min: Vector2i, max: Vector2i) -> Self {
+    pub const fn from_min_max(min: Vector2i, max: Vector2i) -> Self {
         assert!(min.x <= max.x);
         assert!(min.y <= max.y);
         Self { min, max }
@@ -53,6 +53,7 @@ impl Box2i {
             ),
         }
     }
+
     /// The inclusive minimum coordinates of the box.
     #[inline]
     pub fn min(&self) -> Vector2i {

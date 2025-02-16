@@ -154,6 +154,25 @@ impl Rotation3i {
         TABLE[self as usize]
     }
 
+    /// Converts this rotation to a [`Matrix3`].
+    const fn to_mat3(self) -> Matrix3 {
+        const TABLE: [Matrix3; 24] = {
+            let mut table = [Matrix3::identity(); 24];
+            let mut i: u8 = 0;
+            while i < 24 {
+                let rot: Rotation3i = unsafe { std::mem::transmute(i) };
+                table[i as usize] = Matrix3 {
+                    x: rot.apply_vec3(vec3(1.0, 0.0, 0.0)),
+                    y: rot.apply_vec3(vec3(0.0, 1.0, 0.0)),
+                    z: rot.apply_vec3(vec3(0.0, 0.0, 1.0)),
+                };
+                i += 1;
+            }
+            table
+        };
+        TABLE[self as usize]
+    }
+
     /// Applies this rotation to a [`Vector3i`].
     const fn apply_vec3i(&self, source: Vector3i) -> Vector3i {
         match self {
@@ -185,7 +204,7 @@ impl Rotation3i {
     }
 
     /// Applies this rotation to a [`Vector3`].
-    fn apply_vec3(&self, source: Vector3) -> Vector3 {
+    const fn apply_vec3(&self, source: Vector3) -> Vector3 {
         match self {
             Rotation3i::XpYpZp => source,
             Rotation3i::YpXpZn => vec3(source.y, source.x, -source.z),
@@ -263,7 +282,7 @@ impl From<Rotation3i> for Rotation3 {
 
 impl From<Rotation3i> for Matrix3 {
     fn from(rotation: Rotation3i) -> Matrix3 {
-        rotation.to_rot3().into()
+        rotation.to_mat3()
     }
 }
 
@@ -291,6 +310,15 @@ fn test_compose_associative() {
 fn test_to_rot3() {
     for a in Rotation3i::iter() {
         let b: Rotation3 = a.into();
+        let test = vec3(1.0, 2.0, 3.0);
+        approx::assert_relative_eq!(a * test, b * test, max_relative = 1.0e-6);
+    }
+}
+
+#[test]
+fn test_to_mat3() {
+    for a in Rotation3i::iter() {
+        let b: Matrix3 = a.into();
         let test = vec3(1.0, 2.0, 3.0);
         approx::assert_relative_eq!(a * test, b * test, max_relative = 1.0e-6);
     }

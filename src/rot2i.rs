@@ -50,6 +50,24 @@ impl Rotation2i {
         ][self as usize]
     }
 
+    /// Converts this rotation to a [`Matrix2`].
+    const fn to_mat2(self) -> Matrix2 {
+        const TABLE: [Matrix2; 4] = {
+            let mut table = [Matrix2::identity(); 4];
+            let mut i: u8 = 0;
+            while i < 4 {
+                let rot: Rotation2i = unsafe { std::mem::transmute(i) };
+                table[i as usize] = Matrix2 {
+                    x: rot.apply_vec2(vec2(1.0, 0.0)),
+                    y: rot.apply_vec2(vec2(0.0, 1.0)),
+                };
+                i += 1;
+            }
+            table
+        };
+        TABLE[self as usize]
+    }
+
     /// Applies this rotation to a [`Vector2i`].
     const fn apply_vec2i(&self, source: Vector2i) -> Vector2i {
         match self {
@@ -100,7 +118,7 @@ impl From<Rotation2i> for Rotation2 {
 
 impl From<Rotation2i> for Matrix2 {
     fn from(rotation: Rotation2i) -> Matrix2 {
-        rotation.to_rot2().into()
+        rotation.to_mat2()
     }
 }
 
@@ -128,6 +146,15 @@ fn test_compose_associative() {
 fn test_to_rot2() {
     for a in Rotation2i::iter() {
         let b: Rotation2 = a.into();
+        let test = vec2(1.0, 2.0);
+        approx::assert_relative_eq!(a * test, b * test, max_relative = 1.0e-6);
+    }
+}
+
+#[test]
+fn test_to_mat2() {
+    for a in Rotation2i::iter() {
+        let b: Matrix2 = a.into();
         let test = vec2(1.0, 2.0);
         approx::assert_relative_eq!(a * test, b * test, max_relative = 1.0e-6);
     }

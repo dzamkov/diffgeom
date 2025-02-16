@@ -1,9 +1,11 @@
-use crate::{vec2, vec2i, Rotation2, Vector2, Vector2i};
+use crate::{vec2, vec2i, Matrix2, Rotation2, Vector2, Vector2i};
 use cantor::Finite;
 
 /// A rotation in discrete (axis-aligned) two-dimensional space.
 ///
-/// Each element is named after the result of applying the rotation to `(+X, +Y)`.
+/// Each element is name is a shorthand description of the [`Matrix2`] it represents. The first
+/// 2 letters correspond to the direction vector in the first column, the next 2 letters correspond
+/// to the next column, and so on.
 #[repr(u8)]
 #[derive(Finite, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serdere", derive(serdere::Deserialize, serdere::Serialize))]
@@ -12,12 +14,12 @@ pub enum Rotation2i {
     #[default]
     #[cfg_attr(feature = "serdere", serde(rename = "xpyp"))]
     XpYp = 0,
-    #[cfg_attr(feature = "serdere", serde(rename = "ynxp"))]
-    YnXp = 1,
+    #[cfg_attr(feature = "serdere", serde(rename = "ypxn"))]
+    YpXn = 1,
     #[cfg_attr(feature = "serdere", serde(rename = "xnyn"))]
     XnYn = 2,
-    #[cfg_attr(feature = "serdere", serde(rename = "ypxn"))]
-    YpXn = 3,
+    #[cfg_attr(feature = "serdere", serde(rename = "ynxp"))]
+    YnXp = 3,
 }
 
 impl Rotation2i {
@@ -25,10 +27,10 @@ impl Rotation2i {
     pub const IDENTITY: Self = Self::XpYp;
 
     /// A rotation which rotates counter-clockwise by 90 degrees.
-    pub const CCW_90: Self = Self::YnXp;
+    pub const CCW_90: Self = Self::YpXn;
 
     /// A rotation which rotates clockwise by 90 degrees.
-    pub const CW_90: Self = Self::YpXn;
+    pub const CW_90: Self = Self::YnXp;
 
     /// A rotation which rotates by 180 degrees.
     pub const FLIP: Self = Self::XnYn;
@@ -52,9 +54,9 @@ impl Rotation2i {
     const fn apply_vec2i(&self, source: Vector2i) -> Vector2i {
         match self {
             Self::XpYp => vec2i(source.x, source.y),
-            Self::YnXp => vec2i(-source.y, source.x),
+            Self::YpXn => vec2i(-source.y, source.x),
             Self::XnYn => vec2i(-source.x, -source.y),
-            Self::YpXn => vec2i(source.y, -source.x),
+            Self::YnXp => vec2i(source.y, -source.x),
         }
     }
 
@@ -62,9 +64,9 @@ impl Rotation2i {
     const fn apply_vec2(&self, source: Vector2) -> Vector2 {
         match self {
             Self::XpYp => vec2(source.x, source.y),
-            Self::YnXp => vec2(-source.y, source.x),
+            Self::YpXn => vec2(-source.y, source.x),
             Self::XnYn => vec2(-source.x, -source.y),
-            Self::YpXn => vec2(source.y, -source.x),
+            Self::YnXp => vec2(source.y, -source.x),
         }
     }
 }
@@ -93,6 +95,12 @@ impl core::ops::Mul<Vector2> for Rotation2i {
 impl From<Rotation2i> for Rotation2 {
     fn from(rotation: Rotation2i) -> Rotation2 {
         rotation.to_rot2()
+    }
+}
+
+impl From<Rotation2i> for Matrix2 {
+    fn from(rotation: Rotation2i) -> Matrix2 {
+        rotation.to_rot2().into()
     }
 }
 

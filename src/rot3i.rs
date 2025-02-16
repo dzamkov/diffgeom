@@ -1,9 +1,11 @@
-use crate::{vec3, vec3i, Rotation3, Scalar, Vector3, Vector3i, Motion3};
+use crate::{vec3, vec3i, Matrix3, Motion3, Rotation3, Scalar, Vector3, Vector3i};
 use cantor::Finite;
 
 /// A rotation in discrete (axis-aligned) three-dimensional space.
 ///
-/// Each element is named after the result of applying the rotation to `(+X, +Y, +Z)`.
+/// Each element is name is a shorthand description of the [`Matrix3`] it represents. The first
+/// 2 letters correspond to the direction vector in the first column, the next 2 letters correspond
+/// to the next column, and so on.
 #[repr(u8)]
 #[derive(Finite, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serdere", derive(serdere::Deserialize, serdere::Serialize))]
@@ -14,50 +16,50 @@ pub enum Rotation3i {
     XpYpZp = 0,
     #[cfg_attr(feature = "serdere", serde(rename = "ypxpzn"))]
     YpXpZn = 1,
-    #[cfg_attr(feature = "serdere", serde(rename = "ynxpzp"))]
-    YnXpZp = 2,
+    #[cfg_attr(feature = "serdere", serde(rename = "ypxnzp"))]
+    YpXnZp = 2,
     #[cfg_attr(feature = "serdere", serde(rename = "xnypzn"))]
     XnYpZn = 3,
     #[cfg_attr(feature = "serdere", serde(rename = "xnynzp"))]
     XnYnZp = 4,
     #[cfg_attr(feature = "serdere", serde(rename = "ynxnzn"))]
     YnXnZn = 5,
-    #[cfg_attr(feature = "serdere", serde(rename = "ypxnzp"))]
-    YpXnZp = 6,
+    #[cfg_attr(feature = "serdere", serde(rename = "ynxpzp"))]
+    YnXpZp = 6,
     #[cfg_attr(feature = "serdere", serde(rename = "xpynzn"))]
     XpYnZn = 7,
-    #[cfg_attr(feature = "serdere", serde(rename = "zpxpyp"))]
-    ZpXpYp = 8,
-    #[cfg_attr(feature = "serdere", serde(rename = "xpznyp"))]
-    XpZnYp = 9,
+    #[cfg_attr(feature = "serdere", serde(rename = "ypzpxp"))]
+    YpZpXp = 8,
+    #[cfg_attr(feature = "serdere", serde(rename = "xpzpyn"))]
+    XpZpYn = 9,
     #[cfg_attr(feature = "serdere", serde(rename = "xnzpyp"))]
     XnZpYp = 10,
-    #[cfg_attr(feature = "serdere", serde(rename = "znxpyn"))]
-    ZnXpYn = 11,
-    #[cfg_attr(feature = "serdere", serde(rename = "znxnyp"))]
-    ZnXnYp = 12,
+    #[cfg_attr(feature = "serdere", serde(rename = "ypznxn"))]
+    YpZnXn = 11,
+    #[cfg_attr(feature = "serdere", serde(rename = "ynzpxn"))]
+    YnZpXn = 12,
     #[cfg_attr(feature = "serdere", serde(rename = "xnznyn"))]
     XnZnYn = 13,
-    #[cfg_attr(feature = "serdere", serde(rename = "xpznyn"))]
-    XpZpYn = 14,
-    #[cfg_attr(feature = "serdere", serde(rename = "zpxnyn"))]
-    ZpXnYn = 15,
-    #[cfg_attr(feature = "serdere", serde(rename = "ypzpxp"))]
-    YpZpXp = 16,
-    #[cfg_attr(feature = "serdere", serde(rename = "zpypxn"))]
-    ZpYpXn = 17,
-    #[cfg_attr(feature = "serdere", serde(rename = "znypxp"))]
-    ZnYpXp = 18,
-    #[cfg_attr(feature = "serdere", serde(rename = "ynzpzn"))]
-    YnZpXn = 19,
+    #[cfg_attr(feature = "serdere", serde(rename = "xpznyp"))]
+    XpZnYp = 14,
     #[cfg_attr(feature = "serdere", serde(rename = "ynznxp"))]
-    YnZnXp = 20,
+    YnZnXp = 15,
+    #[cfg_attr(feature = "serdere", serde(rename = "zpxpyp"))]
+    ZpXpYp = 16,
+    #[cfg_attr(feature = "serdere", serde(rename = "znypxp"))]
+    ZnYpXp = 17,
+    #[cfg_attr(feature = "serdere", serde(rename = "zpypxn"))]
+    ZpYpXn = 18,
+    #[cfg_attr(feature = "serdere", serde(rename = "znxnyp"))]
+    ZnXnYp = 19,
+    #[cfg_attr(feature = "serdere", serde(rename = "zpxnyn"))]
+    ZpXnYn = 20,
     #[cfg_attr(feature = "serdere", serde(rename = "znynxn"))]
     ZnYnXn = 21,
     #[cfg_attr(feature = "serdere", serde(rename = "zpynxp"))]
     ZpYnXp = 22,
-    #[cfg_attr(feature = "serdere", serde(rename = "ypznxn"))]
-    YpZnXn = 23,
+    #[cfg_attr(feature = "serdere", serde(rename = "znxpyn"))]
+    ZnXpYn = 23,
 }
 
 impl Rotation3i {
@@ -157,28 +159,28 @@ impl Rotation3i {
         match self {
             Rotation3i::XpYpZp => source,
             Rotation3i::YpXpZn => vec3i(source.y, source.x, -source.z),
-            Rotation3i::YnXpZp => vec3i(-source.y, source.x, source.z),
+            Rotation3i::YpXnZp => vec3i(-source.y, source.x, source.z),
             Rotation3i::XnYpZn => vec3i(-source.x, source.y, -source.z),
             Rotation3i::XnYnZp => vec3i(-source.x, -source.y, source.z),
             Rotation3i::YnXnZn => vec3i(-source.y, -source.x, -source.z),
-            Rotation3i::YpXnZp => vec3i(source.y, -source.x, source.z),
+            Rotation3i::YnXpZp => vec3i(source.y, -source.x, source.z),
             Rotation3i::XpYnZn => vec3i(source.x, -source.y, -source.z),
-            Rotation3i::ZpXpYp => vec3i(source.z, source.x, source.y),
-            Rotation3i::XpZnYp => vec3i(source.x, -source.z, source.y),
+            Rotation3i::YpZpXp => vec3i(source.z, source.x, source.y),
+            Rotation3i::XpZpYn => vec3i(source.x, -source.z, source.y),
             Rotation3i::XnZpYp => vec3i(-source.x, source.z, source.y),
-            Rotation3i::ZnXpYn => vec3i(-source.z, source.x, -source.y),
-            Rotation3i::ZnXnYp => vec3i(-source.z, -source.x, source.y),
+            Rotation3i::YpZnXn => vec3i(-source.z, source.x, -source.y),
+            Rotation3i::YnZpXn => vec3i(-source.z, -source.x, source.y),
             Rotation3i::XnZnYn => vec3i(-source.x, -source.z, -source.y),
-            Rotation3i::XpZpYn => vec3i(source.x, source.z, -source.y),
-            Rotation3i::ZpXnYn => vec3i(source.z, -source.x, -source.y),
-            Rotation3i::YpZpXp => vec3i(source.y, source.z, source.x),
-            Rotation3i::ZpYpXn => vec3i(source.z, source.y, -source.x),
-            Rotation3i::ZnYpXp => vec3i(-source.z, source.y, source.x),
-            Rotation3i::YnZpXn => vec3i(-source.y, source.z, -source.x),
-            Rotation3i::YnZnXp => vec3i(-source.y, -source.z, source.x),
+            Rotation3i::XpZnYp => vec3i(source.x, source.z, -source.y),
+            Rotation3i::YnZnXp => vec3i(source.z, -source.x, -source.y),
+            Rotation3i::ZpXpYp => vec3i(source.y, source.z, source.x),
+            Rotation3i::ZnYpXp => vec3i(source.z, source.y, -source.x),
+            Rotation3i::ZpYpXn => vec3i(-source.z, source.y, source.x),
+            Rotation3i::ZnXnYp => vec3i(-source.y, source.z, -source.x),
+            Rotation3i::ZpXnYn => vec3i(-source.y, -source.z, source.x),
             Rotation3i::ZnYnXn => vec3i(-source.z, -source.y, -source.x),
             Rotation3i::ZpYnXp => vec3i(source.z, -source.y, source.x),
-            Rotation3i::YpZnXn => vec3i(source.y, -source.z, -source.x),
+            Rotation3i::ZnXpYn => vec3i(source.y, -source.z, -source.x),
         }
     }
 
@@ -187,28 +189,28 @@ impl Rotation3i {
         match self {
             Rotation3i::XpYpZp => source,
             Rotation3i::YpXpZn => vec3(source.y, source.x, -source.z),
-            Rotation3i::YnXpZp => vec3(-source.y, source.x, source.z),
+            Rotation3i::YpXnZp => vec3(-source.y, source.x, source.z),
             Rotation3i::XnYpZn => vec3(-source.x, source.y, -source.z),
             Rotation3i::XnYnZp => vec3(-source.x, -source.y, source.z),
             Rotation3i::YnXnZn => vec3(-source.y, -source.x, -source.z),
-            Rotation3i::YpXnZp => vec3(source.y, -source.x, source.z),
+            Rotation3i::YnXpZp => vec3(source.y, -source.x, source.z),
             Rotation3i::XpYnZn => vec3(source.x, -source.y, -source.z),
-            Rotation3i::ZpXpYp => vec3(source.z, source.x, source.y),
-            Rotation3i::XpZnYp => vec3(source.x, -source.z, source.y),
+            Rotation3i::YpZpXp => vec3(source.z, source.x, source.y),
+            Rotation3i::XpZpYn => vec3(source.x, -source.z, source.y),
             Rotation3i::XnZpYp => vec3(-source.x, source.z, source.y),
-            Rotation3i::ZnXpYn => vec3(-source.z, source.x, -source.y),
-            Rotation3i::ZnXnYp => vec3(-source.z, -source.x, source.y),
+            Rotation3i::YpZnXn => vec3(-source.z, source.x, -source.y),
+            Rotation3i::YnZpXn => vec3(-source.z, -source.x, source.y),
             Rotation3i::XnZnYn => vec3(-source.x, -source.z, -source.y),
-            Rotation3i::XpZpYn => vec3(source.x, source.z, -source.y),
-            Rotation3i::ZpXnYn => vec3(source.z, -source.x, -source.y),
-            Rotation3i::YpZpXp => vec3(source.y, source.z, source.x),
-            Rotation3i::ZpYpXn => vec3(source.z, source.y, -source.x),
-            Rotation3i::ZnYpXp => vec3(-source.z, source.y, source.x),
-            Rotation3i::YnZpXn => vec3(-source.y, source.z, -source.x),
-            Rotation3i::YnZnXp => vec3(-source.y, -source.z, source.x),
+            Rotation3i::XpZnYp => vec3(source.x, source.z, -source.y),
+            Rotation3i::YnZnXp => vec3(source.z, -source.x, -source.y),
+            Rotation3i::ZpXpYp => vec3(source.y, source.z, source.x),
+            Rotation3i::ZnYpXp => vec3(source.z, source.y, -source.x),
+            Rotation3i::ZpYpXn => vec3(-source.z, source.y, source.x),
+            Rotation3i::ZnXnYp => vec3(-source.y, source.z, -source.x),
+            Rotation3i::ZpXnYn => vec3(-source.y, -source.z, source.x),
             Rotation3i::ZnYnXn => vec3(-source.z, -source.y, -source.x),
             Rotation3i::ZpYnXp => vec3(source.z, -source.y, source.x),
-            Rotation3i::YpZnXn => vec3(source.y, -source.z, -source.x),
+            Rotation3i::ZnXpYn => vec3(source.y, -source.z, -source.x),
         }
     }
 }
@@ -256,6 +258,12 @@ impl core::ops::Mul<Vector3> for Rotation3i {
 impl From<Rotation3i> for Rotation3 {
     fn from(rotation: Rotation3i) -> Rotation3 {
         rotation.to_rot3()
+    }
+}
+
+impl From<Rotation3i> for Matrix3 {
+    fn from(rotation: Rotation3i) -> Matrix3 {
+        rotation.to_rot3().into()
     }
 }
 

@@ -13,8 +13,9 @@
 //! not objects, where positive Z points forward).
 //!
 //! Furthermore, "normalized device coordinates", which are the target of all projection transforms
-//! in this module, are in the range [-1, 1] × [-1, 1] × [0, 1] with higher Z values being further
-//! away from the camera. This is the convention used by D3D12 and Metal.
+//! in this module, are in the range \[-1, 1\] × \[-1, 1\] × \[0, 1\] with higher Z values being
+//! *closer* to the camera. This is the convention used by WebGPU, D3D12 and Metal when the
+//! [reversed-Z trick](https://developer.nvidia.com/blog/visualizing-depth-precision/) is applied.
 use crate::{vec3, vec4, Affine3, Matrix3, Matrix4, Motion3, Projective3, Rotation3, Scalar, Vector3};
 
 /// A transformation which supports the [`LookTowards::look_towards`] method.
@@ -90,11 +91,11 @@ impl Perspective for Projective3 {
         let z_z;
         let w_z;
         if far_z == Scalar::INFINITY {
-            z_z = -1.0;
-            w_z = -near_z;
+            z_z = 0.0;
+            w_z = near_z;
         } else {
-            z_z = far_z / (near_z - far_z);
-            w_z = near_z * far_z / (near_z - far_z);
+            z_z = near_z / (far_z - near_z);
+            w_z = far_z * z_z;
         };
         Self::new(Matrix4 {
             x: vec4(x_x, 0.0, 0.0, 0.0),
@@ -108,7 +109,7 @@ impl Perspective for Projective3 {
 #[test]
 fn test_perspective() {
     let proj = Projective3::perspective(2.0, crate::PI / 2.0, 1.0, 5.0);
-    approx::assert_relative_eq!(proj * vec3(-2.0, -1.0, -1.0), vec3(-1.0, -1.0, 0.0));
-    approx::assert_relative_eq!(proj * vec3(2.0, -1.0, -1.0), vec3(1.0, -1.0, 0.0));
-    approx::assert_relative_eq!(proj * vec3(10.0, 5.0, -5.0), vec3(1.0, 1.0, 1.0));
+    approx::assert_relative_eq!(proj * vec3(-2.0, -1.0, -1.0), vec3(-1.0, -1.0, 1.0));
+    approx::assert_relative_eq!(proj * vec3(2.0, -1.0, -1.0), vec3(1.0, -1.0, 1.0));
+    approx::assert_relative_eq!(proj * vec3(10.0, 5.0, -5.0), vec3(1.0, 1.0, 0.0));
 }

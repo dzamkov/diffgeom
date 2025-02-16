@@ -41,6 +41,7 @@ pub use rot2i::Rotation2i;
 pub use rot3i::Rotation3i;
 pub use trans2::{Affine2, Motion2, Similarity2};
 pub use trans3::{Affine3, Motion3, Similarity3};
+pub use proj3::Projective3;
 pub use trans2i::{Motion2i, Ortho2i};
 pub use vec2i::{vec2i, Dir2i, Vector2i};
 pub use vec3i::{vec3i, Dir3i, Vector3i};

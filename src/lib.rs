@@ -32,6 +32,7 @@ mod vec3i;
 
 pub mod shape;
 pub mod time;
+pub mod conv;
 
 pub use diffvec::{vec2, vec3, vec4, Matrix2, Matrix3, Matrix4, Vector2, Vector3, Vector4};
 pub use diffvec::{Scalar, PI};

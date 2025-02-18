@@ -30,6 +30,15 @@ impl Motion3 {
         }
     }
 
+    /// Gets the inverse of this motion.
+    pub fn inverse(&self) -> Self {
+        let rotation = self.rotation.inverse();
+        Self {
+            rotation,
+            offset: rotation * -self.offset,
+        }
+    }
+
     /// Gets the linear component of this motion.
     pub const fn linear(&self) -> Rotation3 {
         self.rotation

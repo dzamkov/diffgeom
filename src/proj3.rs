@@ -1,4 +1,4 @@
-use crate::{vec3, vec4, Affine3, Matrix4, Motion3, Rotation3, Scalar, Similarity3, Vector3};
+use crate::{vec3, vec4, Affine3, Matrix4, Motion3, Rotation3, Similarity3, Vector3};
 
 /// A projective transform in three-dimensional space.
 #[repr(transparent)]

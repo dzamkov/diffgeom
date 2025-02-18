@@ -30,11 +30,6 @@ impl Motion2 {
         }
     }
 
-    /// Gets the linear component of this motion.
-    pub const fn linear(&self) -> Rotation2 {
-        self.rotation
-    }
-
     /// Gets the inverse of this motion.
     pub fn inverse(&self) -> Self {
         let rotation = self.rotation.inverse();
@@ -42,6 +37,11 @@ impl Motion2 {
             rotation,
             offset: rotation * -self.offset,
         }
+    }
+
+    /// Gets the linear component of this motion.
+    pub const fn linear(&self) -> Rotation2 {
+        self.rotation
     }
 }
 
